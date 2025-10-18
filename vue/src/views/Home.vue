@@ -1,77 +1,99 @@
-<template>
-  <div>
-    <div style="font-size: 20px;font-weight: bold;color: red;text-decoration: underline;font-style: italic;margin: 20px">
-      欢迎大家跟着青哥哥一起学项目，一起提升自己，实现自己够0到1的突破!
-    </div>
+﻿<template>
+  <div class="home">
+    <h1>Element Plus 常用组件示例</h1>
 
-    <div style="font-size: 30px">
-      {{a}}  {{b}}
-    </div>
+    <!-- 按钮组件 -->
+    <el-button type="primary" @click="handleClick">点击我</el-button>
 
-    <div>
-      {{data.a}}
-      {{data.b}}
-      {{data.c}}
-      {{data.d}}
-    </div>
+    <!-- 输入框组件 -->
+    <el-input v-model="inputValue" placeholder="请输入内容" />
 
-    <div>
-      <input v-model="data.a" />
-    </div>
+    <!-- 下拉选择组件 -->
+    <el-select v-model="selectValue" placeholder="请选择">
+      <el-option
+          v-for="item in options"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value"
+      />
+    </el-select>
 
-    <div style="margin-bottom: 20px">
-      <span style="color: red" v-if="data.name === '佩奇'" >小猪佩奇</span>
-      <span style="color: blue" v-if="data.name === '乔治'" >小猪乔治</span>
-      <span style="color: hotpink" v-else>小猪朵朵</span>
-    </div>
+    <!-- 复选框组件 -->
+    <el-checkbox v-model="checked">复选框</el-checkbox>
 
-    <div style="display: flex">
-      <div @click="show(item)" style="width: 300px;height:300px;text-align:center;line-height:300px;font-size:30px;margin-right:10px;background-color: green" v-for="item in data.arr">{{item}}</div>
-    </div>
+    <!-- 单选框组件 -->
+    <el-radio v-model="radioValue" label="1">选项1</el-radio>
+    <el-radio v-model="radioValue" label="2">选项2</el-radio>
 
-    <div>
-      <select style="width: 200px">
-        <option v-for="item in data.fruits">{{item}}</option>
-      </select>
-    </div>
+    <!-- 开关组件 -->
+    <el-switch v-model="switchValue" active-text="开" inactive-text="关" />
 
-    <div style="margin-bottom: 20px">
-      <button @click="click">点我加好运</button>
-    </div>
+    <!-- 日期选择器组件 -->
+    <el-date-picker v-model="dateValue" type="date" placeholder="选择日期" />
 
-    <div>
-      <div :style="data.box"></div>
-    </div>
+    <!-- 表格组件 -->
+    <el-table :data="tableData" style="width: 100%">
+      <el-table-column prop="date" label="日期" width="180" />
+      <el-table-column prop="name" label="姓名" width="180" />
+      <el-table-column prop="address" label="地址" />
+    </el-table>
+
+    <!-- 对话框组件 -->
+    <el-button type="text" @click="dialogVisible = true">打开对话框</el-button>
+    <el-dialog v-model="dialogVisible" title="提示">
+      <span>这是一个对话框</span>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="dialogVisible = false">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import {onMounted, reactive, ref} from "vue";
+import { ref } from 'vue';
 
-const a=ref(1)
-const b=ref("青哥哥真的很帅")
+// 按钮事件
+const handleClick = () => {
+  ElMessage.success('按钮点击事件触发');
+};
 
-const data=reactive({
-  a:123,
-  b:"啊啊啊啊",
-  c:"122222222",
-  d:false,
-  name:'',
-  arr:[1,2,3],
-  fruits:['苹果','香蕉','橘子'],
-  box:{
-    width:'100px',
-    height:'100px',
-    backgroundColor:'yellow'
-  }
-})
+// 输入框数据
+const inputValue = ref('');
 
-onMounted(()=>{
-  console.log('页面加载完成')
-})
+// 下拉选择数据
+const selectValue = ref('');
+const options = [
+  { value: 'option1', label: '选项1' },
+  { value: 'option2', label: '选项2' },
+  { value: 'option3', label: '选项3' },
+];
 
-const click=() =>{
-  alert("好运+1")
-}
+// 复选框数据
+const checked = ref(false);
 
+// 单选框数据
+const radioValue = ref('1');
+
+// 开关数据
+const switchValue = ref(true);
+
+// 日期选择器数据
+const dateValue = ref('');
+
+// 表格数据
+const tableData = [
+  { date: '2025-10-18', name: '张三', address: '北京市' },
+  { date: '2025-10-19', name: '李四', address: '上海市' },
+  { date: '2025-10-20', name: '王五', address: '广州市' },
+];
+
+// 对话框数据
+const dialogVisible = ref(false);
 </script>
+
+<style scoped>
+.home {
+  padding: 20px;
+}
+</style>

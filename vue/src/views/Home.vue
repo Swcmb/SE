@@ -1,7 +1,58 @@
-﻿<template>
+<template>
   <div class="home">
     <h1>Element Plus 常用组件示例</h1>
 
+    <!-- 路由导航示例 -->
+    <div class="navigation-section">
+      <h2>路由导航示例</h2>
+      
+      <!-- 声明式导航 -->
+      <div class="declarative-navigation">
+        <h3>声明式导航</h3>
+        <el-button type="primary">
+          <router-link to="/about" class="nav-link">关于我们</router-link>
+        </el-button>
+        <el-button type="success">
+          <router-link to="/user" class="nav-link">用户中心</router-link>
+        </el-button>
+        <el-button type="warning">
+          <router-link to="/product/1" class="nav-link">产品1</router-link>
+        </el-button>
+      </div>
+      
+      <!-- 编程式导航 -->
+      <div class="programmatic-navigation">
+        <h3>编程式导航</h3>
+        <el-button type="primary" @click="goToAbout">关于我们</el-button>
+        <el-button type="success" @click="goToUser">用户中心</el-button>
+        <el-button type="warning" @click="goToProduct(2)">产品2</el-button>
+        <el-button type="danger" @click="goToLogin">登录页面</el-button>
+      </div>
+      
+      <!-- 参数传递示例 -->
+      <div class="param-demo">
+        <h3>路由参数传递示例</h3>
+        <el-form :inline="true">
+          <el-form-item label="产品ID">
+            <el-input v-model="productId" placeholder="输入产品ID"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button @click="goToProductById">动态参数跳转</el-button>
+          </el-form-item>
+        </el-form>
+        
+        <el-form :inline="true">
+          <el-form-item label="搜索关键词">
+            <el-input v-model="searchKeyword" placeholder="输入搜索词"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button @click="goToProductWithQuery">查询参数跳转</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+    </div>
+
+    <!-- 原有组件示例 -->
     <!-- 按钮组件 -->
     <el-button type="primary" @click="handleClick">点击我</el-button>
 
@@ -39,7 +90,7 @@
     </el-table>
 
     <!-- 对话框组件 -->
-    <el-button type="text" @click="dialogVisible = true">打开对话框</el-button>
+    <el-button type="primary" text @click="dialogVisible = true">打开对话框</el-button>
     <el-dialog v-model="dialogVisible" title="提示">
       <span>这是一个对话框</span>
       <template #footer>
@@ -52,6 +103,44 @@
 
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
+// 路由参数相关数据
+const productId = ref('3');
+const searchKeyword = ref('手机');
+
+// 路由导航方法
+const goToAbout = () => {
+  router.push('/about');
+};
+
+const goToUser = () => {
+  router.push('/user');
+};
+
+const goToProduct = (id) => {
+  router.push(`/product/${id}`);
+};
+
+const goToLogin = () => {
+  router.push('/login');
+};
+
+const goToProductById = () => {
+  router.push(`/product/${productId.value}`);
+};
+
+const goToProductWithQuery = () => {
+  router.push({
+    path: `/product/${productId.value}`,
+    query: { 
+      search: searchKeyword.value,
+      category: 'electronics'
+    }
+  });
+};
 
 // 按钮事件
 const handleClick = () => {
@@ -95,5 +184,26 @@ const dialogVisible = ref(false);
 <style scoped>
 .home {
   padding: 20px;
+}
+
+.navigation-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+}
+
+.declarative-navigation, .programmatic-navigation, .param-demo {
+  margin-bottom: 20px;
+}
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+}
+
+.el-button {
+  margin-right: 10px;
+  margin-bottom: 10px;
 }
 </style>

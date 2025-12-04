@@ -41,14 +41,7 @@
 #### 数据库配置
 在 `src/main/resources/application-dev.yml` 文件中配置数据库连接：
 
-```yaml
-spring:
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://182.92.157.62:3326/vue?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false&serverTimezone=GMT%2b8&allowPublicKeyRetrieval=true
-    username: root
-    password: Nej6FLcVKcaTKK-
-```
+
 
 ### 安装与运行
 

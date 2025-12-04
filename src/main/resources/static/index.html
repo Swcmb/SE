@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生管理系统</title>
+    <!-- Element Plus CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Element Plus -->
+    <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
+    <!-- Axios -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        .container {
+            padding: 20px;
+        }
+        .search-form {
+            margin-bottom: 20px;
+        }
+        .table-container {
+            margin-bottom: 20px;
+        }
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <h2>学生管理系统</h2>
+            
+            <!-- 查询表单 -->
+            <el-form :inline="true" :model="searchForm" class="search-form">
+                <el-form-item label="姓名">
+                    <el-input v-model="searchForm.name" placeholder="请输入姓名" clearable />
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" @click="handleSearch">查询</el-button>
+                    <el-button @click="handleReset">重置</el-button>
+                    <el-button type="success" @click="handleAdd">新增</el-button>
+                    <el-button type="danger" @click="handleBatchDelete" :disabled="selectedRows.length === 0">批量删除</el-button>
+                </el-form-item>
+            </el-form>
+
+            <!-- 数据表格 -->
+            <div class="table-container">
+                <el-table 
+                    :data="tableData" 
+                    style="width: 100%" 
+                    @selection-change="handleSelectionChange"
+                    border>
+                    <el-table-column type="selection" width="55" />
+                    <el-table-column prop="id" label="ID" width="80" />
+                    <el-table-column prop="name" label="姓名" width="120" />
+                    <el-table-column prop="age" label="年龄" width="80" />
+                    <el-table-column prop="gender" label="性别" width="80" />
+                    <el-table-column prop="email" label="邮箱" width="200" />
+                    <el-table-column prop="className" label="班级" width="120" />
+                    <el-table-column prop="createTime" label="创建时间" width="180">
+                        <template #default="scope">
+                            {{ formatDate(scope.row.createTime) }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="150" fixed="right">
+                        <template #default="scope">
+                            <el-button type="primary" size="small" @click="handleEdit(scope.row)">编辑</el-button>
+                            <el-button type="danger" size="small" @click="handleDelete(scope.row)">删除</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+
+            <!-- 分页组件 -->
+            <div class="pagination-container">
+                <el-pagination
+                    v-model:current-page="pagination.pageNum"
+                    v-model:page-size="pagination.pageSize"
+                    :page-sizes="[5, 10, 20, 50]"
+                    :total="pagination.total"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                />
+            </div>
+            
+            <!-- 新增/编辑表单弹窗 -->
+            <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px">
+                <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
+                    <el-form-item label="姓名" prop="name">
+                        <el-input v-model="form.name" placeholder="请输入姓名" />
+                    </el-form-item>
+                    <el-form-item label="年龄" prop="age">
+                        <el-input v-model.number="form.age" placeholder="请输入年龄" />
+                    </el-form-item>
+                    <el-form-item label="性别" prop="gender">
+                        <el-select v-model="form.gender" placeholder="请选择性别" style="width: 100%">
+                            <el-option label="男" value="男" />
+                            <el-option label="女" value="女" />
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="邮箱" prop="email">
+                        <el-input v-model="form.email" placeholder="请输入邮箱" />
+                    </el-form-item>
+                </el-form>
+                <template #footer>
+                    <span class="dialog-footer">
+                        <el-button @click="dialogVisible = false">取消</el-button>
+                        <el-button type="primary" @click="submitForm">确定</el-button>
+                    </span>
+                </template>
+            </el-dialog>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, reactive, ref, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                // 响应式数据
+                const searchForm = reactive({
+                    name: ''
+                });
+
+                const pagination = reactive({
+                    pageNum: 1,
+                    pageSize: 5,
+                    total: 0
+                });
+
+                const tableData = ref([]);
+                const selectedRows = ref([]);
+
+                // 表单相关
+                const dialogVisible = ref(false);
+                const dialogTitle = ref('');
+                const isEdit = ref(false);
+                const formRef = ref();
+                const form = reactive({
+                    id: null,
+                    name: '',
+                    age: null,
+                    gender: '',
+                    email: ''
+                });
+
+                // 表单验证规则
+                const rules = {
+                    name: [
+                        { required: true, message: '请输入姓名', trigger: 'blur' }
+                    ],
+                    age: [
+                        { required: true, message: '请输入年龄', trigger: 'blur' },
+                        { type: 'number', message: '年龄必须为数字', trigger: 'blur' }
+                    ],
+                    gender: [
+                        { required: true, message: '请选择性别', trigger: 'change' }
+                    ],
+                    email: [
+                        { required: true, message: '请输入邮箱', trigger: 'blur' },
+                        { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+                    ]
+                };
+
+                // 创建axios实例
+                const request = axios.create({
+                    baseURL: 'http://localhost:8080',
+                    timeout: 30000
+                });
+
+                // 请求拦截器
+                request.interceptors.request.use(config => {
+                    config.headers['Content-Type'] = 'application/json;charset=utf-8';
+                    return config;
+                }, error => {
+                    return Promise.reject(error);
+                });
+
+                // 响应拦截器
+                request.interceptors.response.use(
+                    response => {
+                        let res = response.data;
+                        if (typeof res === 'string') {
+                            res = res ? JSON.parse(res) : res;
+                        }
+                        return res;
+                    },
+                    error => {
+                        if (error.response) {
+                            if (error.response.status === 404) {
+                                ElementPlus.ElMessage.error('未找到请求接口');
+                            } else if (error.response.status === 500) {
+                                ElementPlus.ElMessage.error('系统异常，请查看后端控制台报错');
+                            } else {
+                                console.error(error.message);
+                            }
+                        }
+                        return Promise.reject(error);
+                    }
+                );
+
+                // 加载数据
+                const load = async () => {
+                    try {
+                        const params = {
+                            pageNum: pagination.pageNum,
+                            pageSize: pagination.pageSize
+                        };
+                        
+                        if (searchForm.name) {
+                            params.name = searchForm.name;
+                        }
+
+                        const response = await request.get('/student/selectPage', { params });
+                        
+                        if (response) {
+                            tableData.value = response.list || [];
+                            pagination.total = response.total || 0;
+                        }
+                    } catch (error) {
+                        console.error('加载数据失败:', error);
+                        ElementPlus.ElMessage.error('加载数据失败');
+                    }
+                };
+
+                // 查询
+                const handleSearch = () => {
+                    pagination.pageNum = 1;
+                    load();
+                };
+
+                // 重置
+                const handleReset = () => {
+                    searchForm.name = '';
+                    pagination.pageNum = 1;
+                    load();
+                };
+
+                // 新增
+                const handleAdd = () => {
+                    dialogTitle.value = '新增学生';
+                    isEdit.value = false;
+                    // 重置表单
+                    Object.assign(form, {
+                        id: null,
+                        name: '',
+                        age: null,
+                        gender: '',
+                        email: ''
+                    });
+                    dialogVisible.value = true;
+                };
+
+                // 编辑
+                const handleEdit = (row) => {
+                    dialogTitle.value = '编辑学生';
+                    isEdit.value = true;
+                    // 填充表单数据
+                    Object.assign(form, {
+                        id: row.id,
+                        name: row.name,
+                        age: row.age,
+                        gender: row.gender,
+                        email: row.email
+                    });
+                    dialogVisible.value = true;
+                };
+
+                // 删除
+                const handleDelete = (row) => {
+                    ElementPlus.ElMessageBox.confirm(
+                        `确定要删除学生 "${row.name}" 吗？`,
+                        '删除确认',
+                        {
+                            confirmButtonText: '确定',
+                            cancelButtonText: '取消',
+                            type: 'warning'
+                        }
+                    ).then(async () => {
+                        try {
+                            const response = await request.delete(`/student/${row.id}`);
+                            if (response.success) {
+                                ElementPlus.ElMessage.success('删除成功');
+                                load(); // 重新加载数据
+                            } else {
+                                ElementPlus.ElMessage.error(response.message || '删除失败');
+                            }
+                        } catch (error) {
+                            console.error('删除失败:', error);
+                            ElementPlus.ElMessage.error('删除失败: ' + (error.message || '未知错误'));
+                        }
+                    }).catch(() => {
+                        // 用户取消删除
+                    });
+                };
+
+                // 批量删除
+                const handleBatchDelete = () => {
+                    if (selectedRows.value.length === 0) {
+                        ElementPlus.ElMessage.warning('请至少选择一条记录');
+                        return;
+                    }
+                    
+                    ElementPlus.ElMessageBox.confirm(
+                        `确定要删除选中的 ${selectedRows.value.length} 条记录吗？`,
+                        '删除确认',
+                        {
+                            confirmButtonText: '确定',
+                            cancelButtonText: '取消',
+                            type: 'warning'
+                        }
+                    ).then(async () => {
+                        ElementPlus.ElMessage.info(`批量删除功能已触发，选中了 ${selectedRows.value.length} 条记录`);
+                        // 这里应该实现批量删除逻辑
+                        load(); // 重新加载数据
+                    }).catch(() => {
+                        // 用户取消删除
+                    });
+                };
+
+                // 表格选择变化
+                const handleSelectionChange = (selection) => {
+                    selectedRows.value = selection;
+                };
+
+                // 页码变化
+                const handleCurrentChange = (pageNum) => {
+                    pagination.pageNum = pageNum;
+                    load();
+                };
+
+                // 页大小变化
+                const handleSizeChange = (pageSize) => {
+                    pagination.pageSize = pageSize;
+                    pagination.pageNum = 1;
+                    load();
+                };
+
+                // 提交表单
+                const submitForm = () => {
+                    if (!formRef.value) return;
+                    
+                    formRef.value.validate(async (valid) => {
+                        if (valid) {
+                            try {
+                                let response;
+                                if (isEdit.value) {
+                                    // 编辑
+                                    response = await request.put('/student', form);
+                                } else {
+                                    // 新增
+                                    response = await request.post('/student', form);
+                                }
+                                
+                                if (response.success) {
+                                    ElementPlus.ElMessage.success(response.message || (isEdit.value ? '更新成功' : '新增成功'));
+                                    dialogVisible.value = false;
+                                    load(); // 重新加载数据
+                                } else {
+                                    ElementPlus.ElMessage.error(response.message || (isEdit.value ? '更新失败' : '新增失败'));
+                                }
+                            } catch (error) {
+                                console.error('操作失败:', error);
+                                ElementPlus.ElMessage.error((isEdit.value ? '更新失败' : '新增失败') + ': ' + (error.message || '未知错误'));
+                            }
+                        }
+                    });
+                };
+
+                // 弹窗关闭时重置表单
+                const handleDialogClose = () => {
+                    if (formRef.value) {
+                        formRef.value.resetFields();
+                    }
+                };
+
+                // 格式化日期
+                const formatDate = (dateString) => {
+                    if (!dateString) return '';
+                    const date = new Date(dateString);
+                    return date.toLocaleString('zh-CN');
+                };
+
+                // 组件挂载时加载数据
+                onMounted(() => {
+                    load();
+                });
+
+                return {
+                    searchForm,
+                    pagination,
+                    tableData,
+                    selectedRows,
+                    // 表单相关
+                    dialogVisible,
+                    dialogTitle,
+                    isEdit,
+                    formRef,
+                    form,
+                    rules,
+                    load,
+                    handleSearch,
+                    handleReset,
+                    handleAdd,
+                    handleEdit,
+                    handleDelete,
+                    handleBatchDelete,
+                    handleSelectionChange,
+                    handleCurrentChange,
+                    handleSizeChange,
+                    submitForm,
+                    handleDialogClose,
+                    formatDate
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>

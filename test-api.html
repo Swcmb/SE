@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>学生管理系统 API 测试</h1>
+    
+    <div class="test-section">
+        <h3>1. 测试分页查询</h3>
+        <button class="test-button" onclick="testPageQuery()">查询第1页，每页5条</button>
+        <button class="test-button" onclick="testPageQueryWithParams()">查询第2页，每页10条</button>
+        <button class="test-button" onclick="testSearchByName()">按姓名搜索"张"</button>
+        <div id="pageResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. 测试查询所有学生</h3>
+        <button class="test-button" onclick="testGetAllStudents()">查询所有学生</button>
+        <div id="allResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. 测试按ID查询</h3>
+        <button class="test-button" onclick="testGetById(1)">查询ID=1的学生</button>
+        <div id="byIdResult" class="result"></div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:8080';
+
+        async function makeRequest(url, elementId) {
+            const resultElement = document.getElementById(elementId);
+            resultElement.textContent = '请求中...';
+            resultElement.className = 'result';
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                resultElement.textContent = `状态码: ${response.status}\n\n${JSON.stringify(data, null, 2)}`;
+                resultElement.className = 'result success';
+            } catch (error) {
+                resultElement.textContent = `请求失败: ${error.message}`;
+                resultElement.className = 'result error';
+            }
+        }
+
+        function testPageQuery() {
+            makeRequest(`${BASE_URL}/student/selectPage?pageNum=1&pageSize=5`, 'pageResult');
+        }
+
+        function testPageQueryWithParams() {
+            makeRequest(`${BASE_URL}/student/selectPage?pageNum=2&pageSize=10`, 'pageResult');
+        }
+
+        function testSearchByName() {
+            makeRequest(`${BASE_URL}/student/selectPage?pageNum=1&pageSize=5&name=张`, 'pageResult');
+        }
+
+        function testGetAllStudents() {
+            makeRequest(`${BASE_URL}/student`, 'allResult');
+        }
+
+        function testGetById(id) {
+            makeRequest(`${BASE_URL}/student/${id}`, 'byIdResult');
+        }
+
+        // 页面加载时显示说明
+        window.onload = function() {
+            document.getElementById('pageResult').textContent = '点击按钮测试API';
+            document.getElementById('allResult').textContent = '点击按钮测试API';
+            document.getElementById('byIdResult').textContent = '点击按钮测试API';
+        };
+    </script>
+</body>
+</html>

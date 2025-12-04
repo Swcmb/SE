@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据库连接测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>数据库连接和表结构测试</h1>
+    
+    <div class="test-section">
+        <h3>1. 测试简单查询（只查询基本字段）</h3>
+        <button class="test-button" onclick="testSimpleQuery()">查询基本字段</button>
+        <div id="simpleResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. 测试表结构</h3>
+        <button class="test-button" onclick="testTableStructure()">查看表结构</button>
+        <div id="structureResult" class="result"></div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:8080';
+
+        async function makeRequest(url, elementId) {
+            const resultElement = document.getElementById(elementId);
+            resultElement.textContent = '请求中...';
+            resultElement.className = 'result';
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                resultElement.textContent = `状态码: ${response.status}\n\n${JSON.stringify(data, null, 2)}`;
+                resultElement.className = 'result success';
+            } catch (error) {
+                resultElement.textContent = `请求失败: ${error.message}`;
+                resultElement.className = 'result error';
+            }
+        }
+
+        function testSimpleQuery() {
+            // 测试只查询确定存在的字段
+            makeRequest(`${BASE_URL}/student/selectPage?pageNum=1&pageSize=5`, 'simpleResult');
+        }
+
+        function testTableStructure() {
+            makeRequest(`${BASE_URL}/student`, 'structureResult');
+        }
+
+        window.onload = function() {
+            document.getElementById('simpleResult').textContent = '点击按钮测试数据库连接';
+            document.getElementById('structureResult').textContent = '点击按钮测试数据库连接';
+        };
+    </script>
+</body>
+</html>
